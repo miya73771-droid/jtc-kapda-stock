@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kapda Stock & Barcode</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><div class="brand-mark">JTC</div></div>
+  <div class="brand-copy"><h1 id="shopTitle">Kapda Stock</h1><p>Barcode · Price Tags · Stock · Billing</p></div>
+  <div class="top-actions"><span id="connectionBadge" class="badge warn">Setup required</span><button id="logoutBtn" class="btn ghost hidden">Logout</button></div>
+</header>
+
+<main class="wrap">
+  <section id="setupNotice" class="notice">
+    <strong>First-time setup</strong>
+    <p>Cloud sync ke liye Supabase project banana aur <code>config.js</code> mein URL/key bharna hoga. Setup guide ZIP ke andar README mein hai. Tab tak app demo mode mein local browser par chalegi; demo data cloud par sync nahi hoga.</p>
+  </section>
+
+  <section id="authPanel" class="panel auth-panel">
+    <div><h2>Apne account se sign in karein</h2><p class="muted">Online use ke liye same account se mobile aur computer par sign in karein.</p></div>
+    <div class="auth-grid">
+      <label>Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email"></label>
+      <label>Password<input id="authPassword" type="password" placeholder="Kam se kam 8 characters" autocomplete="current-password"></label>
+    </div>
+    <div class="actions"><button id="loginBtn" class="btn primary">Login</button><button id="signupBtn" class="btn secondary">Create account</button></div>
+    <p id="authMessage" class="small muted"></p>
+  </section>
+
+  <section id="appPanel" class="hidden">
+    <nav class="tabs" aria-label="Main sections">
+      <button class="tab active" data-tab="dashboard">Overview</button>
+      <button class="tab" data-tab="products">Products & Stock</button>
+      <button class="tab" data-tab="labels">Price Tags</button>
+      <button class="tab" data-tab="billing">Billing</button>
+      <button class="tab" data-tab="sales">Sales History</button>
+      <button class="tab" data-tab="settings">Shop Settings</button>
+    </nav>
+
+    <section id="tab-dashboard" class="tab-content">
+      <div class="page-heading"><div><h2>Overview</h2><p class="muted">Aapki dukaan ka quick summary.</p></div><button class="btn primary" data-goto="products">+ Add product</button></div>
+      <div class="stats">
+        <article class="stat"><span>Total product variants</span><strong id="statProducts">0</strong></article>
+        <article class="stat"><span>Total units in stock</span><strong id="statUnits">0</strong></article>
+        <article class="stat"><span>Stock value (cost)</span><strong id="statValue">₹0</strong></article>
+        <article class="stat"><span>Today's sales</span><strong id="statSales">₹0</strong></article>
+      </div>
+      <div class="panel"><h3>Low stock</h3><div id="lowStock" class="empty">Abhi koi low-stock product nahi.</div></div>
+      <div class="panel"><h3>Quick notes</h3><ul class="plain-list"><li>Har size/colour combination ko alag product variant rakhein.</li><li>Barcode har variant ke liye unique hota hai.</li><li>Tag print karne se pehle plain paper par test print karein.</li></ul></div>
+    </section>
+
+    <section id="tab-products" class="tab-content hidden">
+      <div class="page-heading"><div><h2>Products & Stock</h2><p class="muted">Product details save hote hi barcode auto-generate hota hai.</p></div><button id="newProductBtn" class="btn primary">+ New product</button></div>
+      <div id="productFormPanel" class="panel hidden">
+        <h3 id="productFormTitle">Add product</h3>
+        <form id="productForm">
+          <input id="productId" type="hidden">
+          <div class="form-grid">
+            <label>Product name *<input id="pName" required maxlength="100" placeholder="Cotton shirt"></label>
+            <label>Category<input id="pCategory" maxlength="60" placeholder="Shirt / Kurti / Jeans"></label>
+            <label>Size<input id="pSize" maxlength="20" placeholder="M, L, 32, Free"></label>
+            <label>Colour<input id="pColor" maxlength="40" placeholder="Blue"></label>
+            <label>Purchase price (₹) *<input id="pCost" type="number" min="0" step="0.01" required value="0"></label>
+            <label>Selling price (₹) *<input id="pPrice" type="number" min="0" step="0.01" required value="0"></label>
+            <label>Opening stock *<input id="pStock" type="number" min="0" step="1" required value="0"></label>
+            <label>Low-stock alert at<input id="pLow" type="number" min="0" step="1" value="2"></label>
+          </div>
+          <div class="form-foot"><p id="barcodePreview" class="muted small">Barcode save karne par generate hoga.</p><div class="actions"><button type="button" id="cancelProductBtn" class="btn ghost">Cancel</button><button class="btn primary" type="submit">Save product</button></div></div>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="toolbar"><input id="productSearch" placeholder="Search name, code, size, colour…" aria-label="Search products"><button id="exportProductsBtn" class="btn secondary">Export CSV</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Size / Colour</th><th>Barcode / Code</th><th>Cost</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="productsBody"></tbody></table></div>
+        <p id="productCount" class="small muted"></p>
+      </div>
+    </section>
+
+    <section id="tab-labels" class="tab-content hidden">
+      <div class="page-heading"><div><h2>Price Tags</h2><p class="muted">Products select karein, phir A4 sheet print karein.</p></div><button id="printLabelsBtn" class="btn primary">Print selected tags</button></div>
+      <div class="panel">
+        <div class="toolbar"><input id="labelSearch" placeholder="Product search…"><button id="selectAllLabelsBtn" class="btn secondary">Select all shown</button></div>
+        <p class="small muted">Quantity box se kisi product ke kitne tags chahiye, woh set karein. Professional tag par shop name, product, size/colour, price aur barcode aayega.</p>
+        <div id="labelList" class="label-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-billing" class="tab-content hidden">
+      <div class="page-heading"><div><h2>Billing</h2><p class="muted">USB barcode scanner ko input field par scan karein. Scanner na ho to code type karke Enter dabayein.</p></div></div>
+      <div class="panel">
+        <label>Scan barcode / enter product code
+          <div class="scan-row"><input id="scanInput" autocomplete="off" placeholder="Cursor yahan rakhein, phir scan karein"><button id="addByCodeBtn" class="btn primary">Add</button></div>
+        </label>
+        <p id="billingMessage" class="small muted"></p>
+        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Line total</th><th></th></tr></thead><tbody id="cartBody"></tbody></table></div>
+        <div class="bill-bottom"><label>Customer name (optional)<input id="customerName" placeholder="Customer"></label><div class="bill-total"><span>Total</span><strong id="cartTotal">₹0.00</strong></div></div>
+        <div class="actions right"><button id="clearCartBtn" class="btn ghost">Clear cart</button><button id="checkoutBtn" class="btn primary">Complete sale & print bill</button></div>
+      </div>
+    </section>
+
+    <section id="tab-sales" class="tab-content hidden">
+      <div class="page-heading"><div><h2>Sales History</h2><p class="muted">Recent sales and bill totals.</p></div><button id="exportSalesBtn" class="btn secondary">Export CSV</button></div>
+      <div class="panel"><div class="table-wrap"><table><thead><tr><th>Bill no.</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th></tr></thead><tbody id="salesBody"></tbody></table></div><p id="salesCount" class="small muted"></p></div>
+    </section>
+
+    <section id="tab-settings" class="tab-content hidden">
+      <div class="page-heading"><div><h2>Shop Settings</h2><p class="muted">Printed price tags and receipts use these details.</p></div></div>
+      <div class="panel">
+        <form id="settingsForm">
+          <div class="form-grid">
+            <label>Shop name<input id="sName" required maxlength="100" placeholder="Your Clothing Store"></label>
+            <label>Phone (optional)<input id="sPhone" maxlength="30" placeholder="Mobile number"></label>
+            <label>Address (optional)<input id="sAddress" maxlength="180" placeholder="Shop address"></label>
+            <label>Tag style<select id="sTagStyle"><option value="professional">Professional</option><option value="simple">Simple</option></select></label>
+          </div>
+          <div class="actions"><button class="btn primary" type="submit">Save settings</button></div>
+        </form>
+      </div>
+      <div class="panel"><h3>Important</h3><p>Ye starter app normal non-GST retail bill banati hai. Ye tax compliance ya accounting software ka replacement nahi hai. Cloud setup ke baad apne account ka password private rakhein aur regular CSV backups download karein.</p></div>
+    </section>
+  </section>
+</main>
+
+<div id="toast" role="status" class="toast hidden"></div>
+<div id="printArea" class="print-only"></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
