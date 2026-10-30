@@ -91,3 +91,13 @@ TROUBLESHOOTING
 - Barcode print nahi hota: internet connection/CDN check karein.
 - Stock nahi ghatta: cloud mode mein SQL function checkout_sale create hua hai ya nahi check karein.
 - Website doosre device par same data nahi dikhati: demo mode use na karein; Supabase config set karke account login karein.
+
+
+ACCOUNT / PASSWORD RECOVERY NOTES
+---------------------------------
+- Login, Create account aur Forgot password ke liye Supabase Auth use hota hai.
+- Supabase Dashboard > Authentication > URL Configuration mein apni live GitHub Pages website ka exact URL Redirect URLs list mein add karein, jaise: https://mlya73771-droid.github.io/jtc-kapda-stock/
+- Email verification enabled ho to naya account banane ke baad inbox ya Spam mein verification email kholkar confirm karein.
+- Forgot password par wahi email bharein; reset link email se kholein, phir website par naya password save karein.
+- Alag accounts ka data private rakhne ke liye supabase_schema.sql ke Row Level Security (RLS) policies project mein enabled rehni chahiye. Website mein kabhi service_role key na daalein; sirf publishable/anon key use karein.
+- Live website par update karne se pehle local files aur test account se signup, login, password reset aur data separation test karein.

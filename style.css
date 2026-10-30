@@ -22,3 +22,102 @@
     line-height: 1.1 !important;
   }
 }
+
+/* JTC price-tag layout: exact 50 x 60 mm labels, with cutting gaps */
+@media print {
+  @page { size: A4 portrait; margin: 5mm; }
+  body.printing-labels #printArea { width: 100%; }
+  body.printing-labels #printArea .print-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 50mm) !important;
+    grid-auto-rows: 60mm !important;
+    column-gap: 0 !important;
+    row-gap: 1mm !important;
+    justify-content: center !important;
+    align-content: start !important;
+  }
+  body.printing-labels #printArea .price-tag {
+    box-sizing: border-box !important;
+    width: 50mm !important;
+    height: 60mm !important;
+    min-width: 50mm !important;
+    max-width: 50mm !important;
+    padding: 2mm !important;
+    margin: 0 !important;
+    border: 0.25mm dashed #777 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 1mm !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    font-family: Arial, sans-serif !important;
+  }
+  body.printing-labels #printArea .price-tag .shop {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+    font-size: 10pt !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+    margin: 0 0 1mm !important;
+  }
+  body.printing-labels #printArea .price-tag .tag-details {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.7mm !important;
+    width: 100% !important;
+  }
+  body.printing-labels #printArea .price-tag .tag-row {
+    display: grid !important;
+    grid-template-columns: 17mm 2mm minmax(0,1fr) !important;
+    align-items: start !important;
+    font-size: 8pt !important;
+    line-height: 1.1 !important;
+    gap: 0.5mm !important;
+  }
+  body.printing-labels #printArea .price-tag .tag-row b { font-weight: 800 !important; }
+  body.printing-labels #printArea .price-tag .tag-row span:last-child {
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+  body.printing-labels #printArea .price-tag .price {
+    font-size: 16pt !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    margin-top: auto !important;
+  }
+  body.printing-labels #printArea .price-tag svg {
+    display: block !important;
+    width: 100% !important;
+    height: 10mm !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+  body.printing-labels #printArea .price-tag .barcode-number {
+    text-align: center !important;
+    font-size: 7pt !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere !important;
+  }
+  body.printing-labels #printArea .price-tag .tag-email {
+    text-align: center !important;
+    font-size: 5.3pt !important;
+    line-height: 1 !important;
+    overflow-wrap: anywhere !important;
+    margin-top: 0.5mm !important;
+  }
+}
+
+/* Account recovery controls */
+#authMessage,#resetMessage{line-height:1.6;overflow-wrap:anywhere}#forgotPasswordBtn{margin-left:auto}@media(max-width:520px){#forgotPasswordBtn{margin-left:0}.auth-panel .actions .btn{flex:1}}

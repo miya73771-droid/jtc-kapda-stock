@@ -25,8 +25,20 @@
       <label>Email<input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email"></label>
       <label>Password<input id="authPassword" type="password" placeholder="Kam se kam 8 characters" autocomplete="current-password"></label>
     </div>
-    <div class="actions"><button id="loginBtn" class="btn primary">Login</button><button id="signupBtn" class="btn secondary">Create account</button></div>
-    <p id="authMessage" class="small muted"></p>
+    <div class="actions"><button id="loginBtn" class="btn primary">Login</button><button id="signupBtn" class="btn secondary">Create account</button><button id="forgotPasswordBtn" class="btn ghost" type="button">Forgot password?</button></div>
+    <p class="small muted">Naya account banane ke liye email aur kam se kam 8 characters ka password bharein.</p>
+    <p id="authMessage" class="small muted" role="status" aria-live="polite"></p>
+  </section>
+
+  <section id="resetPanel" class="panel auth-panel hidden">
+    <h2>Naya password set karein</h2>
+    <p class="muted">Email ke reset link se yahan aane ke baad naya password bharein.</p>
+    <div class="auth-grid">
+      <label>Naya password<input id="newPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Kam se kam 8 characters"></label>
+      <label>Password dobara bharein<input id="confirmNewPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Password confirm karein"></label>
+    </div>
+    <div class="actions"><button id="saveNewPasswordBtn" class="btn primary" type="button">Save new password</button><button id="cancelResetBtn" class="btn ghost" type="button">Back to login</button></div>
+    <p id="resetMessage" class="small muted" role="status" aria-live="polite"></p>
   </section>
 
   <section id="appPanel" class="hidden">

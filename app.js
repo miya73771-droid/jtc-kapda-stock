@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const money = n => '₹' + Number(n || 0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const configured = !!(window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG?.SUPABASE_ANON_KEY);
-let supa = null, user = null, demoMode = !configured;
+let supa = null, user = null, demoMode = !configured, recoveryMode = false;
 let products = [], sales = [], cart = [], selectedLabels = new Map();
 let settings = {name:'My Clothing Store',phone:'',address:'',tagStyle:'professional'};
 const localKey='kapda_barcode_demo_v1';
@@ -16,15 +16,16 @@ function setConnection(text,good=false){$('connectionBadge').textContent=text;$(
 function loadLocal(){try{localData=JSON.parse(localStorage.getItem(localKey))||localData}catch{};products=localData.products||[];sales=localData.sales||[];settings={...settings,...localData.settings};}
 function saveLocal(){localData={products,sales,settings};localStorage.setItem(localKey,JSON.stringify(localData));}
 async function init(){
-  if(configured && window.supabase){supa=window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL,window.APP_CONFIG.SUPABASE_ANON_KEY);const {data}=await supa.auth.getSession();user=data.session?.user||null;supa.auth.onAuthStateChange((_e,session)=>{user=session?.user||null;refreshAuth();if(user)loadCloud();});}
+  if(configured && window.supabase){supa=window.supabase.createClient(window.APP_CONFIG.SUPABASE_URL,window.APP_CONFIG.SUPABASE_ANON_KEY);const {data}=await supa.auth.getSession();user=data.session?.user||null;supa.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){recoveryMode=true;$('resetPanel').classList.remove('hidden');$('authPanel').classList.add('hidden');$('appPanel').classList.add('hidden');$('resetMessage').textContent='Naya password set kar sakte hain.';return;}user=session?.user||null;refreshAuth();if(user)loadCloud();});}
   else {loadLocal();setConnection('Demo mode · local only');$('setupNotice').classList.remove('hidden');}
   refreshAuth();
   if(user) await loadCloud(); else if(demoMode) renderAll();
 }
 function refreshAuth(){
   const cloudReady=!!supa;
-  $('authPanel').classList.toggle('hidden',demoMode||!!user);
-  $('appPanel').classList.toggle('hidden',!demoMode&&!user);
+  $('authPanel').classList.toggle('hidden',demoMode||!!user||recoveryMode);
+  $('resetPanel').classList.toggle('hidden',!recoveryMode);
+  $('appPanel').classList.toggle('hidden',!demoMode&&!user||recoveryMode);
   $('logoutBtn').classList.toggle('hidden',!user);
   if(demoMode){$('authPanel').classList.add('hidden');$('appPanel').classList.remove('hidden');}
   if(user){setConnection('Cloud connected',true);$('setupNotice').classList.add('hidden');}
@@ -105,7 +106,7 @@ function printLabels(){
  const ids=[...selectedLabels.keys()];if(!ids.length){toast('Print karne ke liye product select karein.',true);return}
  const chosen=ids.map(id=>({p:products.find(x=>String(x.id)===String(id)),n:selectedLabels.get(id)})).filter(x=>x.p);
  let tags=[];
- chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="price-tag ${settings.tagStyle==='simple'?'tag-simple':''}"><div class="shop">${escapeHtml(settings.name)}</div><div class="prod">${escapeHtml(p.name)}</div><div class="meta">${escapeHtml(p.category||'')} ${p.size?'· '+escapeHtml(p.size):''} ${p.color?'· '+escapeHtml(p.color):''}</div><svg data-barcode="${escapeHtml(p.barcode||p.sku)}"></svg><div class="meta">${escapeHtml(p.barcode||p.sku)}</div><div class="price">${money(p.selling_price)}</div></article>`)});
+ chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="price-tag ${settings.tagStyle==='simple'?'tag-simple':''}"><div class="shop">${escapeHtml(settings.name||'JHARKHAND TRADE CENTER')}</div><div class="tag-details"><div class="tag-row"><b>Product</b><span>:</span><span>${escapeHtml(p.name||'')}</span></div><div class="tag-row"><b>Category</b><span>:</span><span>${escapeHtml(p.category||'-')}</span></div><div class="tag-row"><b>Size</b><span>:</span><span>${escapeHtml(p.size||'-')}</span></div><div class="tag-row"><b>Color</b><span>:</span><span>${escapeHtml(p.color||'-')}</span></div></div><div class="price">${money(p.selling_price)}</div><svg data-barcode="${escapeHtml(p.barcode||p.sku)}"></svg><div class="barcode-number">${escapeHtml(p.barcode||p.sku)}</div><div class="tag-email">jharkhandtradecenter@gmail.com</div></article>`)});
  $('printArea').innerHTML=`<div class="print-grid">${tags.join('')}</div>`;
  try{document.querySelectorAll('#printArea svg[data-barcode]').forEach(svg=>JsBarcode(svg,svg.dataset.barcode,{format:'CODE128',displayValue:false,margin:0,height:34,width:1.3}));}catch(e){toast('Barcode library load nahi hui. Internet check karein.',true);return}
  document.body.classList.remove('printing-bill');document.body.classList.add('printing-labels');window.print();setTimeout(()=>document.body.classList.remove('printing-labels'),800);
@@ -168,8 +169,14 @@ $('clearCartBtn').onclick=()=>{cart=[];renderCart()};$('checkoutBtn').onclick=ch
 $('settingsForm').onsubmit=async e=>{e.preventDefault();settings={name:$('sName').value.trim()||'My Clothing Store',phone:$('sPhone').value.trim(),address:$('sAddress').value.trim(),tagStyle:$('sTagStyle').value};try{await persistSettings();renderAll();toast('Settings saved.')}catch(err){toast(err.message,true)}};
 $('exportProductsBtn').onclick=()=>downloadCSV('kapda-products.csv',[['Name','Category','Size','Colour','Barcode','Cost','Selling price','Stock','Low stock at'],...products.map(p=>[p.name,p.category,p.size,p.color,p.barcode||p.sku,p.cost_price,p.selling_price,p.stock_qty,p.low_stock_at])]);
 $('exportSalesBtn').onclick=()=>downloadCSV('kapda-sales.csv',[['Bill','Date','Customer','Items','Total'],...sales.map(s=>[s.receipt_no,s.created_at,s.customer_name,s.items,s.total])]);
-$('loginBtn').onclick=async()=>{if(!supa)return;const {error}=await supa.auth.signInWithPassword({email:$('authEmail').value,password:$('authPassword').value});$('authMessage').textContent=error?.message||'Login successful';if(error)toast(error.message,true)};
-$('signupBtn').onclick=async()=>{if(!supa)return;const {error}=await supa.auth.signUp({email:$('authEmail').value,password:$('authPassword').value});$('authMessage').textContent=error?'Signup error: '+error.message:'Account request sent. Agar email confirmation on hai to email verify karein, phir login karein.'};
+function authEmail(){return $('authEmail').value.trim().toLowerCase()}
+function authReady(){if(!supa){$('authMessage').textContent='Cloud setup nahi hai. config.js aur Supabase setup check karein.';return false}if(!authEmail()){ $('authMessage').textContent='Pehle email address bharein.';return false }return true}
+$('loginBtn').onclick=async()=>{if(!authReady())return;const password=$('authPassword').value;if(!password){$('authMessage').textContent='Password bharein.';return} $('loginBtn').disabled=true;try{const {error}=await supa.auth.signInWithPassword({email:authEmail(),password});$('authMessage').textContent=error?friendlyAuthError(error.message):'Login successful.';if(error)toast(friendlyAuthError(error.message),true)}catch(e){$('authMessage').textContent=friendlyAuthError(e.message)}finally{$('loginBtn').disabled=false}};
+$('signupBtn').onclick=async()=>{if(!authReady())return;const password=$('authPassword').value;if(password.length<8){$('authMessage').textContent='Password kam se kam 8 characters ka hona chahiye.';return} $('signupBtn').disabled=true;try{const {data,error}=await supa.auth.signUp({email:authEmail(),password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});if(error){$('authMessage').textContent='Account nahi bana: '+friendlyAuthError(error.message);return} $('authMessage').textContent=data.session?'Account ban gaya aur login ho gaya.':'Account request ho gayi. Email inbox/spam mein verification link check karein, phir login karein.'}catch(e){$('authMessage').textContent='Account nahi bana: '+friendlyAuthError(e.message)}finally{$('signupBtn').disabled=false}};
+$('forgotPasswordBtn').onclick=async()=>{if(!authReady())return;$('forgotPasswordBtn').disabled=true;try{const {error}=await supa.auth.resetPasswordForEmail(authEmail(),{redirectTo:window.location.origin+window.location.pathname});$('authMessage').textContent=error?'Reset email nahi bheja gaya: '+friendlyAuthError(error.message):'Agar is email par account hai, to password reset link bhej diya gaya hai. Inbox aur Spam folder check karein.';if(error)toast(friendlyAuthError(error.message),true)}catch(e){$('authMessage').textContent='Reset email nahi bheja gaya: '+friendlyAuthError(e.message)}finally{$('forgotPasswordBtn').disabled=false}};
+$('saveNewPasswordBtn').onclick=async()=>{if(!supa){$('resetMessage').textContent='Cloud setup available nahi hai.';return}const p1=$('newPassword').value,p2=$('confirmNewPassword').value;if(p1.length<8){$('resetMessage').textContent='Naya password kam se kam 8 characters ka hona chahiye.';return}if(p1!==p2){$('resetMessage').textContent='Dono passwords match nahi karte.';return}$('saveNewPasswordBtn').disabled=true;try{const {error}=await supa.auth.updateUser({password:p1});if(error){$('resetMessage').textContent='Password update nahi hua: '+friendlyAuthError(error.message);return}$('resetMessage').textContent='Password update ho gaya. Ab naye password se login kar sakte hain.';$('newPassword').value='';$('confirmNewPassword').value='';await supa.auth.signOut();user=null;recoveryMode=false;$('resetPanel').classList.add('hidden');$('authPanel').classList.remove('hidden');refreshAuth();$('authMessage').textContent='Naya password save ho gaya. Ab login karein.'}catch(e){$('resetMessage').textContent='Password update nahi hua: '+friendlyAuthError(e.message)}finally{$('saveNewPasswordBtn').disabled=false}};
+$('cancelResetBtn').onclick=()=>{recoveryMode=false;$('resetPanel').classList.add('hidden');$('authPanel').classList.remove('hidden');refreshAuth()};
+function friendlyAuthError(message){const m=String(message||'').toLowerCase();if(m.includes('invalid login credentials'))return 'Email ya password galat hai.';if(m.includes('user already registered'))return 'Is email se account pehle se bana hua hai. Login ya Forgot password use karein.';if(m.includes('password should be at least'))return 'Password kam se kam 8 characters ka rakhein.';if(m.includes('email not confirmed'))return 'Pehle email inbox/spam mein verification link kholkar email confirm karein.';if(m.includes('rate limit'))return 'Bahut baar request bheji gayi. Kuch der baad dobara try karein.';return message||'Kuch galat hua. Dobara try karein.'}
 $('logoutBtn').onclick=async()=>{if(supa)await supa.auth.signOut();user=null;refreshAuth()};
 init();
 })();
