@@ -6,7 +6,7 @@ const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':
 const configured = !!(window.APP_CONFIG?.SUPABASE_URL && window.APP_CONFIG?.SUPABASE_ANON_KEY);
 let supa = null, user = null, demoMode = !configured, recoveryMode = false;
 let products = [], sales = [], cart = [], selectedLabels = new Map();
-let settings = {name:'My Clothing Store',phone:'',address:'',tagStyle:'professional'};
+let settings = {name:'JHARKHAND TRADE CENTER',phone:'',address:'',tagStyle:'professional'};
 const localKey='kapda_barcode_demo_v1';
 let localData = {products:[],sales:[],settings};
 let toastTimer;
@@ -41,7 +41,7 @@ async function loadCloud(){
     if(pr.error)throw pr.error;if(sr.error)throw sr.error;
     products=(pr.data||[]).map(p=>({...p,barcode:p.barcode||p.sku}));
     sales=(sr.data||[]).map(s=>({...s,items:s.sale_items?.reduce((a,x)=>a+Number(x.quantity),0)||0}));
-    if(st.data)settings={name:st.data.shop_name||'My Clothing Store',phone:st.data.phone||'',address:st.data.address||'',tagStyle:st.data.tag_style||'professional'};
+    if(st.data)settings={name:st.data.shop_name||'JHARKHAND TRADE CENTER',phone:st.data.phone||'',address:st.data.address||'',tagStyle:st.data.tag_style||'professional'};
     renderAll();
   }catch(e){toast('Cloud data load nahi hua: '+e.message,true)}
 }
@@ -106,7 +106,7 @@ function printLabels(){
  const ids=[...selectedLabels.keys()];if(!ids.length){toast('Print karne ke liye product select karein.',true);return}
  const chosen=ids.map(id=>({p:products.find(x=>String(x.id)===String(id)),n:selectedLabels.get(id)})).filter(x=>x.p);
  let tags=[];
- chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="price-tag ${settings.tagStyle==='simple'?'tag-simple':''}"><div class="shop">${escapeHtml(settings.name||'JHARKHAND TRADE CENTER')}</div><div class="tag-details"><div class="tag-row"><b>Product</b><span>:</span><span>${escapeHtml(p.name||'')}</span></div><div class="tag-row"><b>Category</b><span>:</span><span>${escapeHtml(p.category||'-')}</span></div><div class="tag-row"><b>Size</b><span>:</span><span>${escapeHtml(p.size||'-')}</span></div><div class="tag-row"><b>Color</b><span>:</span><span>${escapeHtml(p.color||'-')}</span></div></div><div class="price">${money(p.selling_price)}</div><svg data-barcode="${escapeHtml(p.barcode||p.sku)}"></svg><div class="barcode-number">${escapeHtml(p.barcode||p.sku)}</div><div class="tag-email">jharkhandtradecenter@gmail.com</div></article>`)});
+ chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="price-tag ${settings.tagStyle==='simple'?'tag-simple':''}"><div class="shop">JHARKHAND TRADE CENTER</div><div class="tag-rule"></div><div class="tag-details"><div class="tag-row"><b>Product</b><span>:</span><span>${escapeHtml(p.name||'')}</span></div><div class="tag-row"><b>Category</b><span>:</span><span>${escapeHtml(p.category||'-')}</span></div><div class="tag-row"><b>Size</b><span>:</span><span>${escapeHtml(p.size||'-')}</span></div><div class="tag-row"><b>Color</b><span>:</span><span>${escapeHtml(p.color||'-')}</span></div></div><div class="tag-rule"></div><div class="price">${money(p.selling_price)}</div><svg data-barcode="${escapeHtml(p.barcode||p.sku)}"></svg><div class="barcode-number">${escapeHtml(p.barcode||p.sku)}</div><div class="tag-email">jharkhandtradecenter@gmail.com</div></article>`)});
  $('printArea').innerHTML=`<div class="print-grid">${tags.join('')}</div>`;
  try{document.querySelectorAll('#printArea svg[data-barcode]').forEach(svg=>JsBarcode(svg,svg.dataset.barcode,{format:'CODE128',displayValue:false,margin:0,height:34,width:1.3}));}catch(e){toast('Barcode library load nahi hui. Internet check karein.',true);return}
  document.body.classList.remove('printing-bill');document.body.classList.add('printing-labels');window.print();setTimeout(()=>document.body.classList.remove('printing-labels'),800);
@@ -158,7 +158,31 @@ function downloadCSV(filename,rows){
  const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
 }
-function switchTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-content').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+tab));if(tab==='billing')$('scanInput').focus()}
+async function loadDocuments(){
+  const list=$('documentsList');
+  if(!supa||!user){list.innerHTML='<p class="empty">Documents ke liye Supabase account se login karein.</p>';return}
+  list.innerHTML='<p class="empty">Documents load ho rahe hain…</p>';
+  const {data,error}=await supa.from('user_documents').select('id,document_name,file_path,content_type,size_bytes,created_at').order('created_at',{ascending:false});
+  if(error){list.innerHTML='<p class="empty">Documents setup pending hai. README mein diye SQL setup ko Supabase SQL Editor mein run karein. Error: '+escapeHtml(error.message)+'</p>';return}
+  if(!data?.length){list.innerHTML='<p class="empty">Abhi koi document nahi. Upar se pehla document add karein.</p>';return}
+  list.innerHTML=data.map(d=>`<article class="document-card"><div class="document-icon">${d.content_type==='application/pdf'?'PDF':'IMG'}</div><div class="document-info"><strong>${escapeHtml(d.document_name)}</strong><small>${escapeHtml(d.file_path.split('/').slice(1).join('/'))} · ${(Number(d.size_bytes||0)/1024).toFixed(0)} KB · ${new Date(d.created_at).toLocaleDateString('en-IN')}</small></div><div class="actions"><button class="tiny-btn" data-doc-view="${escapeHtml(d.id)}">View / Download</button><button class="tiny-btn" data-doc-delete="${escapeHtml(d.id)}">Delete</button></div></article>`).join('');
+  list.querySelectorAll('[data-doc-view]').forEach(b=>b.onclick=async()=>{const d=data.find(x=>x.id===b.dataset.docView);if(!d)return;const {data:link,error}=await supa.storage.from('jtc-private-documents').createSignedUrl(d.file_path,60);if(error){toast('Document open nahi hua: '+error.message,true);return}window.open(link.signedUrl,'_blank','noopener')});
+  list.querySelectorAll('[data-doc-delete]').forEach(b=>b.onclick=async()=>{const d=data.find(x=>x.id===b.dataset.docDelete);if(!d||!confirm('Kya aap "'+d.document_name+'" delete karna chahte hain?'))return;const rm=await supa.storage.from('jtc-private-documents').remove([d.file_path]);if(rm.error){toast('File delete nahi hui: '+rm.error.message,true);return}const del=await supa.from('user_documents').delete().eq('id',d.id);if(del.error){toast('Record delete nahi hua: '+del.error.message,true);return}toast('Document delete ho gaya.');loadDocuments()});
+}
+$('documentForm').onsubmit=async e=>{
+ e.preventDefault();if(!supa||!user){$('documentMessage').textContent='Pehle apne account se login karein.';return}
+ const name=$('documentName').value.trim(),file=$('documentFile').files[0];if(!name||!file)return;
+ const allowed=['application/pdf','image/jpeg','image/png'];if(!allowed.includes(file.type)){ $('documentMessage').textContent='Sirf PDF, JPG ya PNG file upload karein.';return }
+ if(file.size>10*1024*1024){$('documentMessage').textContent='File 10 MB se chhoti honi chahiye.';return}
+ $('uploadDocumentBtn').disabled=true;$('documentMessage').textContent='Upload ho raha hai…';
+ const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-100),path=user.id+'/'+crypto.randomUUID()+'_'+safe;
+ try{const up=await supa.storage.from('jtc-private-documents').upload(path,file,{contentType:file.type,upsert:false});if(up.error)throw up.error;
+ const ins=await supa.from('user_documents').insert({user_id:user.id,document_name:name,file_path:path,content_type:file.type,size_bytes:file.size});if(ins.error){await supa.storage.from('jtc-private-documents').remove([path]);throw ins.error}
+ $('documentForm').reset();$('documentMessage').textContent='Document securely upload ho gaya.';toast('Document upload ho gaya.');await loadDocuments();
+ }catch(err){$('documentMessage').textContent='Upload fail hua: '+err.message;toast('Upload fail hua: '+err.message,true)}finally{$('uploadDocumentBtn').disabled=false}
+};
+$('refreshDocumentsBtn').onclick=loadDocuments;
+function switchTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-content').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+tab));if(tab==='billing')$('scanInput').focus();if(tab==='documents')loadDocuments()}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>switchTab(b.dataset.goto));
 $('newProductBtn').onclick=()=>showProductForm();$('cancelProductBtn').onclick=()=>$('productFormPanel').classList.add('hidden');$('productForm').onsubmit=submitProduct;

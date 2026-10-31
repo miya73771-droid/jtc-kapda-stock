@@ -48,6 +48,7 @@
       <button class="tab" data-tab="labels">Price Tags</button>
       <button class="tab" data-tab="billing">Billing</button>
       <button class="tab" data-tab="sales">Sales History</button>
+      <button class="tab" data-tab="documents">Documents</button>
       <button class="tab" data-tab="settings">Shop Settings</button>
     </nav>
 
@@ -116,12 +117,31 @@
       <div class="panel"><div class="table-wrap"><table><thead><tr><th>Bill no.</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th></tr></thead><tbody id="salesBody"></tbody></table></div><p id="salesCount" class="small muted"></p></div>
     </section>
 
+    <section id="tab-documents" class="tab-content hidden">
+      <div class="page-heading"><div><h2>My Documents</h2><p class="muted">Aapke account ke private documents. Dusre accounts inhe nahi dekh sakte.</p></div></div>
+      <div class="panel">
+        <h3>Add a document</h3>
+        <form id="documentForm">
+          <div class="form-grid">
+            <label>Document name *<input id="documentName" required maxlength="100" placeholder="Udyam Registration Certificate"></label>
+            <label>File (PDF, JPG, PNG; max 10 MB) *<input id="documentFile" type="file" accept="application/pdf,image/jpeg,image/png" required></label>
+          </div>
+          <div class="actions"><button id="uploadDocumentBtn" class="btn primary" type="submit">Upload document</button></div>
+          <p id="documentMessage" class="small muted" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="page-heading"><div><h3>Saved documents</h3><p class="muted small">View/download ya delete karein. Private files ka public link nahi banaya jata.</p></div><button id="refreshDocumentsBtn" class="btn secondary" type="button">Refresh</button></div>
+        <div id="documentsList" class="document-list"><p class="empty">Login karne ke baad documents load honge.</p></div>
+      </div>
+    </section>
+
     <section id="tab-settings" class="tab-content hidden">
       <div class="page-heading"><div><h2>Shop Settings</h2><p class="muted">Printed price tags and receipts use these details.</p></div></div>
       <div class="panel">
         <form id="settingsForm">
           <div class="form-grid">
-            <label>Shop name<input id="sName" required maxlength="100" placeholder="Your Clothing Store"></label>
+            <label>Shop name<input id="sName" required maxlength="100" placeholder="JHARKHAND TRADE CENTER"></label>
             <label>Phone (optional)<input id="sPhone" maxlength="30" placeholder="Mobile number"></label>
             <label>Address (optional)<input id="sAddress" maxlength="180" placeholder="Shop address"></label>
             <label>Tag style<select id="sTagStyle"><option value="professional">Professional</option><option value="simple">Simple</option></select></label>

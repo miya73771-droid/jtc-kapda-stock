@@ -101,3 +101,14 @@ ACCOUNT / PASSWORD RECOVERY NOTES
 - Forgot password par wahi email bharein; reset link email se kholein, phir website par naya password save karein.
 - Alag accounts ka data private rakhne ke liye supabase_schema.sql ke Row Level Security (RLS) policies project mein enabled rehni chahiye. Website mein kabhi service_role key na daalein; sirf publishable/anon key use karein.
 - Live website par update karne se pehle local files aur test account se signup, login, password reset aur data separation test karein.
+
+
+DOCUMENTS PRIVATE VAULT SETUP (required for Documents tab)
+1. Supabase Dashboard > SQL Editor > New query kholen.
+2. ZIP mein documents_storage_setup.sql file ka poora code copy karke run karein.
+3. Isse private storage bucket, documents table aur per-account security policies banengi.
+4. Website mein login karke Documents tab se PDF/JPG/PNG (maximum 10 MB) upload karein.
+5. Public bucket ya public sharing links enable na karein. Har account sirf apne documents dekh sakta hai.
+
+A4 PRICE TAG UPDATE
+Tags are 40 mm wide x 50 mm tall, 4 columns x 5 rows (20 per A4 sheet) with cut guides. Print preview mein A4, portrait, 100% / actual size select karke pehle test page print karein.
