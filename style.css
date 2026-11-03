@@ -191,3 +191,74 @@
     align-items:center!important;
   }
 }
+
+
+/* A4 ST-65 MRP-only price labels: 5 columns x 13 rows = 65 labels */
+@page mrp-label-sheet {
+  size: A4 portrait;
+  margin: 10.7mm 9.75mm;
+}
+@media print {
+  body.printing-mrp-labels { page: mrp-label-sheet; background:#fff!important; }
+  body.printing-mrp-labels .topbar,
+  body.printing-mrp-labels .wrap,
+  body.printing-mrp-labels .toast,
+  body.printing-mrp-labels .notice { display:none!important; }
+  body.printing-mrp-labels #printArea { display:block!important; width:190.5mm!important; margin:0!important; padding:0!important; }
+  body.printing-mrp-labels #printArea .mrp-sheet {
+    display:grid!important;
+    grid-template-columns:repeat(5,38.1mm)!important;
+    grid-template-rows:repeat(13,21.2mm)!important;
+    width:190.5mm!important; height:275.6mm!important;
+    margin:0!important; padding:0!important; gap:0!important;
+    break-after:page!important; page-break-after:always!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-sheet:last-child { break-after:auto!important; page-break-after:auto!important; }
+  body.printing-mrp-labels #printArea .mrp-tag {
+    box-sizing:border-box!important; width:38.1mm!important; height:21.2mm!important;
+    margin:0!important; padding:1.2mm!important;
+    border:0.15mm dashed #aaa!important;
+    display:flex!important; flex-direction:column!important;
+    align-items:center!important; justify-content:center!important;
+    text-align:center!important; overflow:hidden!important;
+    font-family:Arial,sans-serif!important; break-inside:avoid!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-brand {
+    font-size:8pt!important; line-height:1!important; font-weight:900!important;
+    letter-spacing:0.5pt!important; margin:0 0 1mm!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-price {
+    font-size:11pt!important; line-height:1!important; font-weight:900!important;
+    white-space:nowrap!important; margin:0!important;
+  }
+}
+
+
+/* ST-65: inset dashed cut guide, leaving a visible white gap inside each die-cut label.
+   Keep the 38.1 x 21.2 mm grid unchanged so alignment with the physical sheet is preserved. */
+@media print {
+  body.printing-mrp-labels #printArea .mrp-tag {
+    position:relative!important;
+    border:0!important;
+    padding:2.2mm!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-tag::after {
+    content:""!important;
+    position:absolute!important;
+    inset:0.9mm!important;
+    border:0.15mm dashed #999!important;
+    pointer-events:none!important;
+  }
+}
+
+
+/* MRP ST-65: larger, bold, dotted J.T.C. shop mark */
+@media print {
+  body.printing-mrp-labels #printArea .mrp-brand {
+    font-size:10.5pt!important;
+    line-height:1!important;
+    font-weight:900!important;
+    letter-spacing:0.8pt!important;
+    margin:0 0 1.1mm!important;
+  }
+}

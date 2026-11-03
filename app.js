@@ -111,6 +111,20 @@ function printLabels(){
  try{document.querySelectorAll('#printArea svg[data-barcode]').forEach(svg=>JsBarcode(svg,svg.dataset.barcode,{format:'CODE128',displayValue:false,margin:0,height:34,width:1.3}));}catch(e){toast('Barcode library load nahi hui. Internet check karein.',true);return}
  document.body.classList.remove('printing-bill');document.body.classList.add('printing-labels');window.print();setTimeout(()=>document.body.classList.remove('printing-labels'),800);
 }
+function printMrpLabels(){
+ const ids=[...selectedLabels.keys()];
+ if(!ids.length){toast('MRP print karne ke liye product select karein.',true);return}
+ const chosen=ids.map(id=>({p:products.find(x=>String(x.id)===String(id)),n:selectedLabels.get(id)})).filter(x=>x.p);
+ const tags=[];
+ chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="mrp-tag"><div class="mrp-brand">J.T.C.</div><div class="mrp-price">MRP ${money(p.selling_price)}</div></article>`)});
+ const sheets=[];
+ for(let i=0;i<tags.length;i+=65){sheets.push(`<div class="mrp-sheet">${tags.slice(i,i+65).join('')}</div>`)}
+ $('printArea').innerHTML=sheets.join('');
+ document.body.classList.remove('printing-bill','printing-labels');
+ document.body.classList.add('printing-mrp-labels');
+ window.print();
+ setTimeout(()=>document.body.classList.remove('printing-mrp-labels'),800);
+}
 function addCartByCode(code){
  code=String(code||'').trim();if(!code)return;
  const p=products.find(p=>String(p.barcode||p.sku).toLowerCase()===code.toLowerCase()||String(p.sku||'').toLowerCase()===code.toLowerCase());
@@ -186,7 +200,7 @@ function switchTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>switchTab(b.dataset.goto));
 $('newProductBtn').onclick=()=>showProductForm();$('cancelProductBtn').onclick=()=>$('productFormPanel').classList.add('hidden');$('productForm').onsubmit=submitProduct;
-$('productSearch').oninput=renderProducts;$('labelSearch').oninput=renderLabels;$('printLabelsBtn').onclick=printLabels;
+$('productSearch').oninput=renderProducts;$('labelSearch').oninput=renderLabels;$('printLabelsBtn').onclick=printLabels;$('printMrpLabelsBtn').onclick=printMrpLabels;
 $('selectAllLabelsBtn').onclick=()=>{products.filter(p=>[p.name,p.category,p.size,p.color,p.barcode].some(x=>String(x||'').toLowerCase().includes($('labelSearch').value.toLowerCase()))).forEach(p=>selectedLabels.set(String(p.id),selectedLabels.get(String(p.id))||1));renderLabels()};
 $('scanInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addCartByCode($('scanInput').value)}};$('addByCodeBtn').onclick=()=>addCartByCode($('scanInput').value);
 $('clearCartBtn').onclick=()=>{cart=[];renderCart()};$('checkoutBtn').onclick=checkout;
