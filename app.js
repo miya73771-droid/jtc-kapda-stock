@@ -116,7 +116,7 @@ function printMrpLabels(){
  if(!ids.length){toast('MRP print karne ke liye product select karein.',true);return}
  const chosen=ids.map(id=>({p:products.find(x=>String(x.id)===String(id)),n:selectedLabels.get(id)})).filter(x=>x.p);
  const tags=[];
- chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="mrp-tag"><div class="mrp-brand">J.T.C.</div><div class="mrp-price">MRP ${money(p.selling_price)}</div></article>`)});
+ chosen.forEach(({p,n})=>{for(let i=0;i<n;i++)tags.push(`<article class="mrp-tag"><div class="mrp-brand"><span class="mrp-brand-top">JHARKHAND TRADE</span><span class="mrp-brand-bottom">CENTER</span></div><div class="mrp-price">MRP ${money(p.selling_price)}</div></article>`)});
  const sheets=[];
  for(let i=0;i<tags.length;i+=65){sheets.push(`<div class="mrp-sheet">${tags.slice(i,i+65).join('')}</div>`)}
  $('printArea').innerHTML=sheets.join('');

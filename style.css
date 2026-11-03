@@ -262,3 +262,48 @@
     margin:0 0 1.1mm!important;
   }
 }
+
+
+/* MRP ST-65: full shop name in two centered lines */
+@media print {
+  body.printing-mrp-labels #printArea .mrp-brand {
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:0.35mm!important;
+    width:100%!important;
+    margin:0 0 1mm!important;
+    letter-spacing:0!important;
+    line-height:1!important;
+    font-weight:900!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-brand-top {
+    display:block!important;
+    white-space:nowrap!important;
+    font-family:Arial,sans-serif!important;
+    font-size:7.1pt!important;
+    line-height:1!important;
+    font-weight:900!important;
+    letter-spacing:-0.15pt!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-brand-bottom {
+    display:inline-block!important;
+    min-width:17mm!important;
+    padding:0.55mm 2.5mm!important;
+    background:#172b62!important;
+    color:#fff!important;
+    border-radius:2mm!important;
+    font-family:Arial,sans-serif!important;
+    font-size:6.4pt!important;
+    line-height:1!important;
+    font-weight:900!important;
+    letter-spacing:0.5pt!important;
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+  }
+  body.printing-mrp-labels #printArea .mrp-price {
+    font-size:10.5pt!important;
+    margin-top:0.3mm!important;
+  }
+}
