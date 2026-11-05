@@ -282,7 +282,7 @@
     display:block!important;
     white-space:nowrap!important;
     font-family:Arial,sans-serif!important;
-    font-size:7.1pt!important;
+    font-size:8pt!important;
     line-height:1!important;
     font-weight:900!important;
     letter-spacing:-0.15pt!important;
@@ -295,7 +295,7 @@
     color:#fff!important;
     border-radius:2mm!important;
     font-family:Arial,sans-serif!important;
-    font-size:6.4pt!important;
+    font-size:6.8pt!important;
     line-height:1!important;
     font-weight:900!important;
     letter-spacing:0.5pt!important;
@@ -307,3 +307,57 @@
     margin-top:0.3mm!important;
   }
 }
+
+
+/* Product name and price range search */
+.product-search-toolbar{align-items:center;flex-wrap:wrap}.product-search-toolbar input{max-width:none;flex:1 1 170px;min-width:140px}
+
+
+/* Existing-product suggestions in the Add/Edit Product form */
+.form-grid label.suggest-host{position:relative;z-index:5}
+.product-suggestions{position:absolute;left:0;right:0;top:calc(100% + 4px);max-height:260px;overflow:auto;background:#10233f;color:#fff;border:1px solid #49617f;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:1000;padding:5px}
+.product-suggestions.hidden{display:none}
+.suggestion-item{display:flex;width:100%;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:transparent;color:#fff;border:0;border-radius:6px;padding:9px 11px;cursor:pointer}
+.suggestion-item:hover{background:#29486f}
+.suggestion-item strong{font-size:14px}
+.suggestion-item small{font-size:12px;color:#d5e2f2;line-height:1.4}
+.suggestion-empty{padding:10px;font-size:13px;color:#d5e2f2}
+
+
+/* Inline matching products in Add Product form. No floating autocomplete popups. */
+.product-form-matches{margin:12px 0 18px;border:1px solid #d9e1ee;border-radius:12px;background:#f8faff;padding:12px}
+.product-form-matches.hidden{display:none}
+.match-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px;color:#263b5c;font-size:13px}
+.match-head span{font-size:11px;color:#66758b}
+.match-list{display:flex;flex-direction:column;gap:7px;max-height:300px;overflow:auto}
+.match-product{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;width:100%;text-align:left;padding:10px 12px;border:1px solid #dce4f0;border-radius:9px;background:#fff;color:#172b49;cursor:pointer}
+.match-product:hover{border-color:#7896e8;background:#f1f5ff}
+.match-product span{min-width:0;display:flex;flex-direction:column;gap:4px}
+.match-product small{font-size:11px;color:#69778b;overflow-wrap:anywhere}
+.match-numbers{text-align:right}
+.match-edit-label{font-size:12px;font-weight:700;color:#3158c8}
+.match-empty{margin:8px 0;color:#69778b;font-size:12px}
+.match-footer{display:flex;justify-content:flex-end;margin-top:10px}
+@media(max-width:650px){.match-product{grid-template-columns:1fr auto}.match-edit-label{grid-column:2;grid-row:1}.match-numbers{grid-column:1/-1;text-align:left}}
+/* Product & Stock tag selection checkboxes */
+.stock-tag-check{width:17px!important;height:17px;cursor:pointer;accent-color:#315ee8;}
+#tab-products .product-search-toolbar .btn{white-space:nowrap}
+.tax-invoice{font:9pt Arial,sans-serif;color:#111;width:190mm;margin:0 auto}.tax-invoice h2,.tax-invoice h1,.tax-invoice .center{text-align:center;margin:2px 0}.tax-invoice h1{font-size:17pt}.tax-invoice .inv-top{display:flex;justify-content:space-between;border:1px solid #555;padding:5px}.tax-invoice .copy{font-style:italic}.tax-invoice .inv-meta,.tax-invoice .party-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #555}.tax-invoice .inv-meta>div,.tax-invoice .party-grid>div{padding:7px;border-right:1px solid #555;min-height:48px}.tax-invoice .party-grid>div{min-height:78px}.tax-invoice table{width:100%;min-width:0;border-collapse:collapse;font-size:7.5pt}.tax-invoice th,.tax-invoice td{border:1px solid #555;padding:4px 3px}.tax-invoice th{white-space:normal}.tax-invoice .num{text-align:right}.tax-invoice .inv-total{display:flex;justify-content:space-between;border:1px solid #555;border-top:0;padding:8px}.tax-invoice .inv-footer{display:grid;grid-template-columns:1fr 1fr;border:1px solid #555;margin-top:12px;min-height:90px}.tax-invoice .inv-footer>div{padding:8px;border-right:1px solid #555}.manual-add textarea{width:100%;border:1px solid #d7dce6;border-radius:9px;padding:10px;font:inherit}
+@media print{body.printing-bill #printArea .tax-invoice{display:block!important}body.printing-bill #printArea{width:100%}body.printing-bill .tax-invoice{width:190mm}}
+
+
+/* Selected price-tag popup: avoids scrolling through the full product catalogue. */
+.tag-modal.hidden{display:none!important}
+.tag-modal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px}
+.tag-modal-backdrop{position:absolute;inset:0;background:rgba(12,25,48,.58)}
+.tag-modal-card{position:relative;z-index:1;width:min(760px,96vw);max-height:88vh;display:flex;flex-direction:column;background:#fff;border:1px solid #dce3ef;border-radius:16px;box-shadow:0 22px 70px rgba(0,0,0,.28);padding:18px;color:#172b49}
+.tag-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid #e5eaf2;padding-bottom:12px}
+.tag-modal-head h2{margin:0 0 4px;font-size:21px}.tag-modal-head p{margin:0}
+.tag-modal-list{overflow:auto;min-height:70px;padding:10px 2px;display:flex;flex-direction:column;gap:9px}
+.tag-modal-row{display:grid;grid-template-columns:22px minmax(0,1fr) 130px;gap:12px;align-items:center;padding:12px;border:1px solid #dfe5ef;border-radius:11px;background:#fbfcff}
+.tag-modal-row>input{width:18px;height:18px;accent-color:#315ee8}
+.tag-modal-product{display:flex;flex-direction:column;gap:4px;min-width:0}.tag-modal-product strong{font-size:14px}.tag-modal-product small{font-size:11px;color:#68778d;overflow-wrap:anywhere}
+.tag-modal-qty{font-size:11px;color:#5b6980}.tag-modal-qty input{display:block;width:100%;margin-top:5px;padding:8px;border:1px solid #d7deea;border-radius:8px;font:inherit}
+.tag-modal-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #e5eaf2;padding-top:12px}.tag-modal-footer .actions{display:flex;gap:8px;flex-wrap:wrap}
+body.tag-modal-open{overflow:hidden}
+@media(max-width:560px){.tag-modal{padding:8px}.tag-modal-card{max-height:94vh;padding:12px}.tag-modal-row{grid-template-columns:20px minmax(0,1fr);gap:8px}.tag-modal-qty{grid-column:2;max-width:150px}.tag-modal-footer{align-items:flex-start;flex-direction:column}.tag-modal-footer .actions{width:100%}.tag-modal-footer .btn{flex:1}}

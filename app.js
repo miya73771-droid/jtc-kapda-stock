@@ -59,7 +59,8 @@ function newBarcode(){return 'KD'+Date.now().toString().slice(-9)+Math.floor(Mat
 function productFromForm(){
   return {name:$('pName').value.trim(),category:$('pCategory').value.trim(),size:$('pSize').value.trim(),color:$('pColor').value.trim(),cost_price:Number($('pCost').value),selling_price:Number($('pPrice').value),stock_qty:Math.floor(Number($('pStock').value)),low_stock_at:Math.floor(Number($('pLow').value||0))};
 }
-function renderAll(){ $('shopTitle').textContent=settings.name||'Kapda Stock';fillSettings();renderDashboard();renderProducts();renderLabels();renderSales();renderCart();}
+function renderAll(){ $('shopTitle').textContent=settings.name||'Kapda Stock';fillSettings();renderDashboard();renderProducts();renderLabels();renderSales();renderCart();fillBillingProductNames();}
+function fillBillingProductNames(){const dl=$('billProductNames');if(dl)dl.innerHTML=[...new Set(products.map(p=>p.name).filter(Boolean))].sort().map(n=>`<option value="${escapeHtml(n)}"></option>`).join('');}
 function fillSettings(){$('sName').value=settings.name||'';$('sPhone').value=settings.phone||'';$('sAddress').value=settings.address||'';$('sTagStyle').value=settings.tagStyle||'professional'}
 function renderDashboard(){
   $('statProducts').textContent=products.length;
@@ -69,20 +70,62 @@ function renderDashboard(){
   const lows=products.filter(p=>Number(p.stock_qty)<=Number(p.low_stock_at??2));
   $('lowStock').innerHTML=lows.length?`<div class="table-wrap"><table><thead><tr><th>Product</th><th>Code</th><th>Stock</th></tr></thead><tbody>${lows.map(p=>`<tr><td>${escapeHtml(p.name)} ${escapeHtml(p.size||'')}</td><td class="code">${escapeHtml(p.barcode||p.sku)}</td><td class="stock-low">${Number(p.stock_qty)}</td></tr>`).join('')}</tbody></table></div>`:'Abhi koi low-stock product nahi.';
 }
+function matchesNameAndExactPrice(p,nameValue,priceValue){
+ const name=String(nameValue||'').toLowerCase().trim();
+ const priceText=String(priceValue??'').trim();
+ const nameMatch=!name||String(p.name||'').toLowerCase().includes(name);
+ const priceMatch=!priceText||(!Number.isNaN(Number(priceText))&&Math.round(Number(p.selling_price||0)*100)===Math.round(Number(priceText)*100));
+ return nameMatch&&priceMatch;
+}
 function renderProducts(){
- const q=$('productSearch').value.toLowerCase().trim();
- const rows=products.filter(p=>[p.name,p.category,p.size,p.color,p.barcode,p.sku].some(x=>String(x||'').toLowerCase().includes(q)));
- $('productsBody').innerHTML=rows.map(p=>`<tr><td><strong>${escapeHtml(p.name)}</strong><br><span class="muted">${escapeHtml(p.category||'')}</span></td><td>${escapeHtml(p.size||'—')} / ${escapeHtml(p.color||'—')}</td><td class="code">${escapeHtml(p.barcode||p.sku||'')}</td><td>${money(p.cost_price)}</td><td>${money(p.selling_price)}</td><td class="${Number(p.stock_qty)<=Number(p.low_stock_at??2)?'stock-low':''}">${Number(p.stock_qty||0)}</td><td><div class="row-actions"><button class="tiny-btn" data-edit="${p.id}">Edit</button><button class="tiny-btn" data-tag="${p.id}">Tag</button></div></td></tr>`).join('');
- $('productCount').textContent=`${rows.length} of ${products.length} products`;
+ const q=$('productSearch').value;
+ const priceQ=$('productPriceSearch').value;
+ const rows=products.filter(p=>matchesNameAndExactPrice(p,q,priceQ));
+ $('productsBody').innerHTML=rows.map(p=>`<tr><td><input type="checkbox" class="stock-tag-check" data-stock-tag="${escapeHtml(p.id)}" aria-label="${escapeHtml(p.name)} tag select" ${selectedLabels.has(String(p.id))?'checked':''}></td><td><strong>${escapeHtml(p.name)}</strong><br><span class="muted">${escapeHtml(p.category||'')}</span></td><td>${escapeHtml(p.size||'—')} / ${escapeHtml(p.color||'—')}</td><td class="code">${escapeHtml(p.barcode||p.sku||'')}</td><td>${money(p.cost_price)}</td><td>${money(p.selling_price)}</td><td class="${Number(p.stock_qty)<=Number(p.low_stock_at??0)?'stock-low':''}">${Number(p.stock_qty||0)}</td><td><div class="row-actions"><button class="tiny-btn" data-edit="${escapeHtml(p.id)}">Edit</button><button class="tiny-btn" data-tag-one="${escapeHtml(p.id)}">Tag</button></div></td></tr>`).join('');
+ $('productCount').textContent=`${rows.length} of ${products.length} products · ${selectedLabels.size} tag selections`;
  $('productsBody').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editProduct(b.dataset.edit));
- $('productsBody').querySelectorAll('[data-tag]').forEach(b=>{b.onclick=()=>{selectedLabels.set(b.dataset.tag,1);renderLabels();switchTab('labels')}});
+ $('productsBody').querySelectorAll('[data-tag-one]').forEach(b=>b.onclick=()=>{const id=String(b.dataset.tagOne);selectedLabels.set(id,selectedLabels.get(id)||1);goToPriceTagProduct(id);});
+ $('productsBody').querySelectorAll('[data-stock-tag]').forEach(c=>c.onchange=()=>{const id=String(c.dataset.stockTag);if(c.checked)selectedLabels.set(id,selectedLabels.get(id)||1);else selectedLabels.delete(id);$('productCount').textContent=`${rows.length} of ${products.length} products · ${selectedLabels.size} tag selections`;});
+}
+function renderProductFormMatches(){
+ const host=$('productFormMatches');
+ if(!host)return;
+ const criteria={name:$('pName').value.trim(),category:$('pCategory').value.trim(),size:$('pSize').value.trim(),color:$('pColor').value.trim(),sellingPrice:$('pPrice').value.trim()};
+ const hasQuery=Object.values(criteria).some(Boolean);
+ if(!hasQuery){host.innerHTML='';host.classList.add('hidden');return;}
+ const norm=v=>String(v||'').trim().toLocaleLowerCase();
+ const rows=products.filter(p=>
+   (!criteria.name||norm(p.name).includes(norm(criteria.name)))&&
+   (!criteria.category||norm(p.category).includes(norm(criteria.category)))&&
+   (!criteria.size||norm(p.size).includes(norm(criteria.size)))&&
+   (!criteria.color||norm(p.color).includes(norm(criteria.color)))&&
+   (!criteria.sellingPrice||(!Number.isNaN(Number(criteria.sellingPrice))&&Math.round(Number(p.selling_price||0)*100)===Math.round(Number(criteria.sellingPrice)*100)))
+ );
+ host.classList.remove('hidden');
+ host.innerHTML=`<div class="match-head"><strong>${rows.length} matching product(s)</strong><span>Product par click karke edit karein</span></div>`+
+ (rows.length?`<div class="match-list">${rows.map(p=>`<button type="button" class="match-product" data-match-edit="${escapeHtml(p.id)}"><span><strong>${escapeHtml(p.name||'')}</strong><small>${escapeHtml(p.category||'-')} · ${escapeHtml(p.size||'-')} · ${escapeHtml(p.color||'-')}</small></span><span class="match-numbers"><strong>${money(p.selling_price)}</strong><small>Stock: ${Number(p.stock_qty||0)} · ${escapeHtml(p.barcode||p.sku||'')}</small></span><span class="match-edit-label">Edit</span></button>`).join('')}</div>`:'<p class="match-empty">In chaar fields se koi purana product match nahi hua. Aap ise naya product bana sakte hain.</p>')+
+ `<div class="match-footer"><button type="button" class="btn secondary" id="addMatchingVariantBtn">+ Add another product with these details</button></div>`;
+ host.querySelectorAll('[data-match-edit]').forEach(b=>b.onclick=()=>editProduct(b.dataset.matchEdit));
+ const addBtn=$('addMatchingVariantBtn');
+ if(addBtn)addBtn.onclick=()=>{
+   $('productId').value='';
+   $('productFormTitle').textContent='Add another product';
+   $('pCost').value='';$('pPrice').value='';$('pStock').value='';$('pLow').value='0';
+   $('barcodePreview').textContent='Naye product ko save karte waqt naya unique barcode milega.';
+   $('pCost').focus();
+ };
+}
+function setupProductFieldSuggestions(){
+ ['pName','pCategory','pSize','pColor','pPrice'].forEach(id=>{
+   const input=$(id);if(input&&!input.dataset.matchReady){input.dataset.matchReady='1';input.addEventListener('input',renderProductFormMatches);}
+ });
 }
 function showProductForm(p=null){
  $('productForm').reset();$('productId').value=p?.id||'';$('productFormTitle').textContent=p?'Edit product':'Add product';
  $('pName').value=p?.name||'';$('pCategory').value=p?.category||'';$('pSize').value=p?.size||'';$('pColor').value=p?.color||'';
- $('pCost').value=p?.cost_price??0;$('pPrice').value=p?.selling_price??0;$('pStock').value=p?.stock_qty??0;$('pLow').value=p?.low_stock_at??2;
+ $('pCost').value=p?.cost_price??'';$('pPrice').value=p?.selling_price??'';$('pStock').value=p?.stock_qty??'';$('pLow').value=p?.low_stock_at??0;
  $('barcodePreview').textContent=p?`Barcode: ${p.barcode||p.sku}`:'Naya unique barcode save karte waqt banega.';
- $('productFormPanel').classList.remove('hidden');$('pName').focus();
+ $('productFormPanel').classList.remove('hidden');setupProductFieldSuggestions();renderProductFormMatches();$('pName').focus();
 }
 function editProduct(id){const p=products.find(x=>String(x.id)===String(id));if(p)showProductForm(p)}
 async function submitProduct(e){
@@ -96,11 +139,15 @@ async function submitProduct(e){
  }catch(err){toast('Save failed: '+err.message,true)}
 }
 function renderLabels(){
- const q=$('labelSearch').value.toLowerCase().trim();
- const rows=products.filter(p=>[p.name,p.category,p.size,p.color,p.barcode].some(x=>String(x||'').toLowerCase().includes(q)));
+ const q=$('labelSearch').value;
+ const priceQ=$('labelPriceSearch').value;
+ const rows=products.filter(p=>matchesNameAndExactPrice(p,q,priceQ));
  $('labelList').innerHTML=rows.map(p=>`<label class="label-choice"><input type="checkbox" data-label-check="${p.id}" ${selectedLabels.has(String(p.id))||selectedLabels.has(p.id)?'checked':''}><span class="details"><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.size||'No size')} · ${escapeHtml(p.color||'No colour')} · ${money(p.selling_price)}</small></span><input class="qty" type="number" min="1" max="100" value="${selectedLabels.get(String(p.id))||selectedLabels.get(p.id)||1}" data-label-qty="${p.id}" aria-label="Tag quantity"></label>`).join('')||'<div class="empty">Pehle Products tab mein product add karein.</div>';
- $('labelList').querySelectorAll('[data-label-check]').forEach(c=>c.onchange=()=>{const id=c.dataset.labelCheck;if(c.checked){if(!selectedLabels.has(id))selectedLabels.set(id,1)}else selectedLabels.delete(id);renderLabels()});
- $('labelList').querySelectorAll('[data-label-qty]').forEach(i=>i.onchange=()=>{const id=i.dataset.labelQty;if(selectedLabels.has(id))selectedLabels.set(id,Math.max(1,Math.min(100,Number(i.value)||1)))});
+ $('labelList').querySelectorAll('[data-label-check]').forEach(c=>c.onchange=()=>{const id=c.dataset.labelCheck;const qty=$('labelList').querySelector(`[data-label-qty="${CSS.escape(id)}"]`);if(c.checked){const raw=String(qty?.value??'').trim();selectedLabels.set(id,Math.max(1,Math.min(100,raw===''?1:Number(raw)||1)))}else selectedLabels.delete(id)});
+ $('labelList').querySelectorAll('[data-label-qty]').forEach(i=>{
+   const sync=()=>{const id=i.dataset.labelQty;const raw=String(i.value??'').trim();const check=$('labelList').querySelector(`[data-label-check="${CSS.escape(id)}"]`);if(raw===''){selectedLabels.delete(id);if(check)check.checked=false;return}const qty=Math.max(1,Math.min(100,Number(raw)||1));selectedLabels.set(id,qty);if(check)check.checked=true;};
+   i.addEventListener('input',sync);i.addEventListener('change',sync);
+ });
 }
 function printLabels(){
  const ids=[...selectedLabels.keys()];if(!ids.length){toast('Print karne ke liye product select karein.',true);return}
@@ -134,6 +181,19 @@ function addCartByCode(code){
  if(existing)existing.qty++;else cart.push({id:p.id,barcode:p.barcode||p.sku,name:p.name,size:p.size,color:p.color,price:Number(p.selling_price),qty:1});
  $('billingMessage').textContent=`Added: ${p.name} ${p.size||''}`;renderCart();$('scanInput').value='';$('scanInput').focus();
 }
+function addCartByDetails(){
+ const name=$('billProductName').value.trim().toLowerCase();
+ const category=$('billProductCategory').value.trim().toLowerCase();
+ const priceText=$('billProductPrice').value.trim();
+ if(!name){toast('Product name bharein.',true);return;}
+ let found=products.filter(p=>String(p.name||'').trim().toLowerCase()===name);
+ if(category)found=found.filter(p=>String(p.category||'').trim().toLowerCase()===category);
+ if(priceText!=='')found=found.filter(p=>Math.round(Number(p.selling_price||0)*100)===Math.round(Number(priceText)*100));
+ if(!found.length){toast('Is naam, category aur price ka product nahi mila. Products & Stock mein pehle add karein.',true);return;}
+ if(found.length>1){toast('Is naam ke multiple variants hain. Sahi Category aur Selling Price bhi bharein.',true);return;}
+ addCartByCode(found[0].barcode||found[0].sku);
+ $('billProductName').value='';$('billProductCategory').value='';$('billProductPrice').value='';
+}
 function renderCart(){
  $('cartBody').innerHTML=cart.map((x,i)=>`<tr><td><strong>${escapeHtml(x.name)}</strong><br><span class="muted">${escapeHtml(x.size||'')} ${escapeHtml(x.color||'')}</span></td><td>${money(x.price)}</td><td><div class="row-actions"><button class="tiny-btn" data-minus="${i}">−</button><strong>${x.qty}</strong><button class="tiny-btn" data-plus="${i}">+</button></div></td><td>${money(x.price*x.qty)}</td><td><button class="tiny-btn" data-remove="${i}">Remove</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Abhi bill mein koi product nahi.</td></tr>';
  $('cartTotal').textContent=money(cart.reduce((a,x)=>a+x.price*x.qty,0));
@@ -160,8 +220,15 @@ async function checkout(){
  }catch(e){toast('Sale save nahi hui: '+e.message,true)}
 }
 function printBill(s){
- const rows=s.lines.map(x=>`<tr><td>${escapeHtml(x.name)} ${escapeHtml(x.size||'')}</td><td>${x.qty}</td><td>${money(x.price*x.qty)}</td></tr>`).join('');
- $('printArea').innerHTML=`<div class="bill-print"><h2>${escapeHtml(settings.name)}</h2><p style="text-align:center">${escapeHtml(settings.address||'')}${settings.phone?' · '+escapeHtml(settings.phone):''}</p><hr><p>Bill: ${escapeHtml(s.receipt_no)}</p><p>Date: ${new Date(s.created_at).toLocaleString('en-IN')}</p><p>Customer: ${escapeHtml(s.customer_name||'Walk-in')}</p><table><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="total">Total: ${money(s.total)}</div><p style="text-align:center;margin-top:14px">Thank you. Visit again!</p></div>`;
+ const wholesale=$('billType')?.value==='wholesale';
+ const rows=wholesale?s.lines.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml($('invoiceHsn').value||'')}</td><td>General</td><td class="num">${x.qty}</td><td>${escapeHtml($('invoiceUnit').value||'Pcs.')}</td><td class="num">${money(x.price)}</td><td class="num">${Number($('invoiceDiscount').value||0).toFixed(2)}</td><td class="num">${money(x.price*(1-Number($('invoiceDiscount').value||0)/100))}</td><td class="num">${money(x.price*x.qty*(1-Number($('invoiceDiscount').value||0)/100))}</td></tr>`).join('') : s.lines.map(x=>`<tr><td>${escapeHtml(x.name)} ${escapeHtml(x.size||'')}</td><td>${x.qty}</td><td>${money(x.price*x.qty)}</td></tr>`).join('');
+ const discount=Math.min(100,Math.max(0,Number($('invoiceDiscount')?.value||0)));
+ const total=wholesale?s.lines.reduce((a,x)=>a+x.price*x.qty*(1-discount/100),0):s.total;
+ if(wholesale){
+  $('printArea').innerHTML=`<div class="tax-invoice"><div class="inv-top"><div><b>GSTIN / UIN:</b> __________________</div><div class="copy">Original Copy</div></div><h2>WHOLESALE INVOICE</h2><h1>${escapeHtml(settings.name||'JHARKHAND TRADE CENTER')}</h1><p class="center">${escapeHtml(settings.address||'')}${settings.phone?' · '+escapeHtml(settings.phone):''}</p><div class="inv-meta"><div>Invoice No.: ${escapeHtml(s.receipt_no)}<br>Date: ${new Date(s.created_at).toLocaleDateString('en-IN')}<br>Place of Supply: Jharkhand (20)<br>Reverse Charge: N</div><div>GR/RR No.: ___________<br>Transport: ___________<br>Vehicle No.: ___________<br>Station: ___________</div></div><div class="party-grid"><div><b>Billed to:</b><br>${escapeHtml($('buyerName').value||s.customer_name||'Walk-in')}<br>${escapeHtml($('buyerAddress').value||'')}<br>GSTIN / UIN: ${escapeHtml($('buyerGstin').value||'')}</div><div><b>Shipped to:</b><br>${escapeHtml($('shipName').value||$('buyerName').value||s.customer_name||'Walk-in')}<br>${escapeHtml($('shipAddress').value||$('buyerAddress').value||'')}</div></div><table><thead><tr><th>S.N.</th><th>Description of Goods</th><th>HSN/SAC</th><th>Mill</th><th>Qty.</th><th>Unit</th><th>Rate</th><th>Disc %</th><th>Price</th><th>Amount (₹)</th></tr></thead><tbody>${s.lines.map((x,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(x.name)} ${escapeHtml(x.size||'')}</td><td>${escapeHtml($('invoiceHsn').value||'')}</td><td>General</td><td>${x.qty}</td><td>${escapeHtml($('invoiceUnit').value||'Pcs.')}</td><td>${money(x.price)}</td><td>${discount.toFixed(2)}</td><td>${money(x.price*(1-discount/100))}</td><td>${money(x.price*x.qty*(1-discount/100))}</td></tr>`).join('')}</tbody></table><div class="inv-total">Total Qty: ${s.lines.reduce((a,x)=>a+x.qty,0)} ${escapeHtml($('invoiceUnit').value||'Pcs.')} <b>Grand Total: ${money(total)}</b></div><div class="inv-footer"><div><b>Terms & Conditions</b><br>1. Goods once sold will not be taken back.<br>2. Subject to Jharkhand jurisdiction only.</div><div><b>Receiver's Signature:</b><br><br><br><b>for ${escapeHtml(settings.name||'JHARKHAND TRADE CENTER')}</b></div></div></div>`;
+ }else{
+  $('printArea').innerHTML=`<div class="bill-print"><h2>${escapeHtml(settings.name)}</h2><p style="text-align:center">${escapeHtml(settings.address||'')}${settings.phone?' · '+escapeHtml(settings.phone):''}</p><hr><p>Bill: ${escapeHtml(s.receipt_no)}</p><p>Date: ${new Date(s.created_at).toLocaleString('en-IN')}</p><p>Customer: ${escapeHtml(s.customer_name||'Walk-in')}</p><table><thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="total">Total: ${money(s.total)}</div><p style="text-align:center;margin-top:14px">Thank you. Visit again!</p></div>`;
+ }
  document.body.classList.remove('printing-labels');document.body.classList.add('printing-bill');window.print();setTimeout(()=>document.body.classList.remove('printing-bill'),800);
 }
 function renderSales(){
@@ -197,12 +264,39 @@ $('documentForm').onsubmit=async e=>{
 };
 $('refreshDocumentsBtn').onclick=loadDocuments;
 function switchTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.tab-content').forEach(s=>s.classList.toggle('hidden',s.id!=='tab-'+tab));if(tab==='billing')$('scanInput').focus();if(tab==='documents')loadDocuments()}
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+function renderTagSelectionModal(){
+ const rows=[...selectedLabels.entries()].map(([id,qty])=>({p:products.find(x=>String(x.id)===String(id)),id:String(id),qty})).filter(x=>x.p);
+ $('tagModalList').innerHTML=rows.length?rows.map(({p,id,qty})=>`<div class="tag-modal-row"><input type="checkbox" data-modal-tag-check="${escapeHtml(id)}" checked aria-label="${escapeHtml(p.name)} select"><div class="tag-modal-product"><strong>${escapeHtml(p.name||'')}</strong><small>${escapeHtml(p.category||'No category')} · ${escapeHtml(p.size||'No size')} · ${escapeHtml(p.color||'No colour')}</small><small>Price: ${money(p.selling_price)} · Barcode: ${escapeHtml(p.barcode||p.sku||'')}</small></div><label class="tag-modal-qty">Tags quantity<input type="number" min="1" max="100" value="${Math.max(1,Math.min(100,Number(qty)||1))}" data-modal-tag-qty="${escapeHtml(id)}"></label></div>`).join(''):'<p class="empty">Koi product select nahi hai. Popup band karke Products & Stock mein product select karein.</p>';
+ $('tagModalCount').textContent=`${rows.length} product(s) selected`;
+ $('tagModalList').querySelectorAll('[data-modal-tag-check]').forEach(c=>c.onchange=()=>{const id=String(c.dataset.modalTagCheck);if(!c.checked)selectedLabels.delete(id);renderTagSelectionModal();});
+ $('tagModalList').querySelectorAll('[data-modal-tag-qty]').forEach(i=>i.onchange=()=>{const id=String(i.dataset.modalTagQty);const q=Math.max(1,Math.min(100,Number(i.value)||1));selectedLabels.set(id,q);i.value=q;$('tagModalCount').textContent=`${selectedLabels.size} product(s) selected`;});
+ $('modalPrintTagsBtn').disabled=!rows.length;$('modalPrintMrpBtn').disabled=!rows.length;
+}
+function openTagSelectionModal(){renderTagSelectionModal();$('tagSelectionModal').classList.remove('hidden');document.body.classList.add('tag-modal-open');}
+function closeTagSelectionModal(){$('tagSelectionModal').classList.add('hidden');document.body.classList.remove('tag-modal-open');}
+function goToPriceTagProduct(id){openTagSelectionModal();}
+$('closeTagModalBtn').onclick=closeTagSelectionModal;
+document.querySelectorAll('[data-close-tag-modal]').forEach(x=>x.onclick=closeTagSelectionModal);
+$('modalPrintTagsBtn').onclick=()=>{if(!selectedLabels.size){toast('Print karne ke liye product select karein.',true);return;}closeTagSelectionModal();printLabels();};
+$('modalPrintMrpBtn').onclick=()=>{if(!selectedLabels.size){toast('Print karne ke liye product select karein.',true);return;}closeTagSelectionModal();printMrpLabels();};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='labels')renderLabels();switchTab(b.dataset.tab)});
 document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>switchTab(b.dataset.goto));
 $('newProductBtn').onclick=()=>showProductForm();$('cancelProductBtn').onclick=()=>$('productFormPanel').classList.add('hidden');$('productForm').onsubmit=submitProduct;
-$('productSearch').oninput=renderProducts;$('labelSearch').oninput=renderLabels;$('printLabelsBtn').onclick=printLabels;$('printMrpLabelsBtn').onclick=printMrpLabels;
-$('selectAllLabelsBtn').onclick=()=>{products.filter(p=>[p.name,p.category,p.size,p.color,p.barcode].some(x=>String(x||'').toLowerCase().includes($('labelSearch').value.toLowerCase()))).forEach(p=>selectedLabels.set(String(p.id),selectedLabels.get(String(p.id))||1));renderLabels()};
+$('productSearch').oninput=renderProducts;$('productPriceSearch').oninput=renderProducts;
+function toggleShownTagSelection(searchId,priceId,buttonId,renderFn){
+ const shown=products.filter(p=>matchesNameAndExactPrice(p,$(searchId).value,$(priceId).value));
+ if(!shown.length){toast('Koi matching product nahi mila.',true);return;}
+ const allSelected=shown.every(p=>selectedLabels.has(String(p.id)));
+ shown.forEach(p=>{const id=String(p.id);if(allSelected)selectedLabels.delete(id);else if(!selectedLabels.has(id))selectedLabels.set(id,1);});
+ renderFn();
+ $(buttonId).textContent=allSelected?'Select all shown for tags':'Deselect all shown';
+}
+$('selectAllStockTagsBtn').onclick=()=>toggleShownTagSelection('productSearch','productPriceSearch','selectAllStockTagsBtn',renderProducts);
+$('goSelectedStockTagsBtn').onclick=()=>{if(!selectedLabels.size){toast('Pehle Products & Stock mein checkbox se product select karein.',true);return;}goToPriceTagProduct([...selectedLabels.keys()][0]);};
+$('labelSearch').oninput=renderLabels;$('labelPriceSearch').oninput=renderLabels;$('printLabelsBtn').onclick=printLabels;$('printMrpLabelsBtn').onclick=printMrpLabels;
+$('selectAllLabelsBtn').onclick=()=>toggleShownTagSelection('labelSearch','labelPriceSearch','selectAllLabelsBtn',renderLabels);
 $('scanInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();addCartByCode($('scanInput').value)}};$('addByCodeBtn').onclick=()=>addCartByCode($('scanInput').value);
+$('addByDetailsBtn').onclick=addCartByDetails;$('billType').onchange=()=> $('wholesaleFields').classList.toggle('hidden',$('billType').value!=='wholesale');
 $('clearCartBtn').onclick=()=>{cart=[];renderCart()};$('checkoutBtn').onclick=checkout;
 $('settingsForm').onsubmit=async e=>{e.preventDefault();settings={name:$('sName').value.trim()||'My Clothing Store',phone:$('sPhone').value.trim(),address:$('sAddress').value.trim(),tagStyle:$('sTagStyle').value};try{await persistSettings();renderAll();toast('Settings saved.')}catch(err){toast(err.message,true)}};
 $('exportProductsBtn').onclick=()=>downloadCSV('kapda-products.csv',[['Name','Category','Size','Colour','Barcode','Cost','Selling price','Stock','Low stock at'],...products.map(p=>[p.name,p.category,p.size,p.color,p.barcode||p.sku,p.cost_price,p.selling_price,p.stock_qty,p.low_stock_at])]);

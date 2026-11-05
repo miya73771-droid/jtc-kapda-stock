@@ -68,24 +68,25 @@
       <div class="page-heading"><div><h2>Products & Stock</h2><p class="muted">Product details save hote hi barcode auto-generate hota hai.</p></div><button id="newProductBtn" class="btn primary">+ New product</button></div>
       <div id="productFormPanel" class="panel hidden">
         <h3 id="productFormTitle">Add product</h3>
-        <form id="productForm">
+        <form id="productForm" autocomplete="off">
           <input id="productId" type="hidden">
           <div class="form-grid">
-            <label>Product name *<input id="pName" required maxlength="100" placeholder="Cotton shirt"></label>
-            <label>Category<input id="pCategory" maxlength="60" placeholder="Shirt / Kurti / Jeans"></label>
-            <label>Size<input id="pSize" maxlength="20" placeholder="M, L, 32, Free"></label>
-            <label>Colour<input id="pColor" maxlength="40" placeholder="Blue"></label>
-            <label>Purchase price (₹) *<input id="pCost" type="number" min="0" step="0.01" required value="0"></label>
-            <label>Selling price (₹) *<input id="pPrice" type="number" min="0" step="0.01" required value="0"></label>
-            <label>Opening stock *<input id="pStock" type="number" min="0" step="1" required value="0"></label>
-            <label>Low-stock alert at<input id="pLow" type="number" min="0" step="1" value="2"></label>
+            <label>Product name *<input id="pName" required maxlength="100" placeholder="Cotton shirt" autocomplete="off" autocomplete="off"></label>
+            <label>Category<input id="pCategory" maxlength="60" placeholder="Shirt / Kurti / Jeans" autocomplete="off" autocomplete="off"></label>
+            <label>Size<input id="pSize" maxlength="20" placeholder="M, L, 32, Free" autocomplete="off" autocomplete="off"></label>
+            <label>Colour<input id="pColor" maxlength="40" placeholder="Blue" autocomplete="off" autocomplete="off"></label>
+            <label>Selling price (₹) *<input id="pPrice" type="number" min="0" step="0.01" required placeholder="Enter selling price"></label>
+            <label>Purchase price (₹) *<input id="pCost" type="number" min="0" step="0.01" required placeholder="Enter purchase price"></label>
+            <label>Opening stock *<input id="pStock" type="number" min="0" step="1" required placeholder="Enter opening stock"></label>
+            <label>Low-stock alert at<input id="pLow" type="number" min="0" step="1" value="0"></label>
           </div>
+          <div id="productFormMatches" class="product-form-matches hidden"></div>
           <div class="form-foot"><p id="barcodePreview" class="muted small">Barcode save karne par generate hoga.</p><div class="actions"><button type="button" id="cancelProductBtn" class="btn ghost">Cancel</button><button class="btn primary" type="submit">Save product</button></div></div>
         </form>
       </div>
       <div class="panel">
-        <div class="toolbar"><input id="productSearch" placeholder="Search name, code, size, colour…" aria-label="Search products"><button id="exportProductsBtn" class="btn secondary">Export CSV</button></div>
-        <div class="table-wrap"><table><thead><tr><th>Product</th><th>Size / Colour</th><th>Barcode / Code</th><th>Cost</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="productsBody"></tbody></table></div>
+        <div class="toolbar product-search-toolbar"><input id="productSearch" placeholder="Search product name…" aria-label="Search product name"><input id="productPriceSearch" type="number" min="0" step="0.01" placeholder="Search exact selling price (₹)" aria-label="Search exact selling price"><button id="selectAllStockTagsBtn" class="btn secondary">Select all shown for tags</button><button id="goSelectedStockTagsBtn" class="btn primary">Price tags for selected</button><button id="exportProductsBtn" class="btn secondary">Export CSV</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Tag</th><th>Product</th><th>Size / Colour</th><th>Barcode / Code</th><th>Cost</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="productsBody"></tbody></table></div>
         <p id="productCount" class="small muted"></p>
       </div>
     </section>
@@ -93,11 +94,20 @@
     <section id="tab-labels" class="tab-content hidden">
       <div class="page-heading"><div><h2>Price Tags</h2><p class="muted">Products select karein, phir A4 sheet print karein.</p></div><div class="actions"><button id="printLabelsBtn" class="btn primary">Print Normal Tags</button><button id="printMrpLabelsBtn" class="btn secondary">Print MRP Tags (A4 ST-65)</button></div></div>
       <div class="panel">
-        <div class="toolbar"><input id="labelSearch" placeholder="Product search…"><button id="selectAllLabelsBtn" class="btn secondary">Select all shown</button></div>
+        <div class="toolbar product-search-toolbar"><input id="labelSearch" placeholder="Search product name…" aria-label="Search product name"><input id="labelPriceSearch" type="number" min="0" step="0.01" placeholder="Search exact selling price (₹)" aria-label="Search exact selling price"><button id="selectAllLabelsBtn" class="btn secondary">Select all shown</button></div>
         <p class="small muted">Quantity box se kisi product ke kitne tags chahiye, woh set karein. Normal tag mein poori product details aur barcode aayega. MRP Tags (A4 ST-65) mein sirf JTC aur MRP price print hoga.</p>
         <div id="labelList" class="label-list"></div>
       </div>
     </section>
+
+    <div id="tagSelectionModal" class="tag-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle">
+      <div class="tag-modal-backdrop" data-close-tag-modal></div>
+      <div class="tag-modal-card">
+        <div class="tag-modal-head"><div><h2 id="tagModalTitle">Selected Price Tags</h2><p class="muted small">Sirf aapke select kiye hue products yahan dikh rahe hain.</p></div><button type="button" id="closeTagModalBtn" class="btn secondary">Close ✕</button></div>
+        <div id="tagModalList" class="tag-modal-list"></div>
+        <div class="tag-modal-footer"><span id="tagModalCount" class="small muted"></span><div class="actions"><button type="button" id="modalPrintMrpBtn" class="btn secondary">Print MRP Tags</button><button type="button" id="modalPrintTagsBtn" class="btn primary">Print Selected Tags</button></div></div>
+      </div>
+    </div>
 
     <section id="tab-billing" class="tab-content hidden">
       <div class="page-heading"><div><h2>Billing</h2><p class="muted">USB barcode scanner ko input field par scan karein. Scanner na ho to code type karke Enter dabayein.</p></div></div>
@@ -105,6 +115,30 @@
         <label>Scan barcode / enter product code
           <div class="scan-row"><input id="scanInput" autocomplete="off" placeholder="Cursor yahan rakhein, phir scan karein"><button id="addByCodeBtn" class="btn primary">Add</button></div>
         </label>
+        <div class="manual-add panel" style="margin-top:14px;background:#f8faff">
+          <h3>Product name se add karein</h3>
+          <div class="form-grid">
+            <label>Product Name<input id="billProductName" list="billProductNames" placeholder="Product name likhein"><datalist id="billProductNames"></datalist></label>
+            <label>Category<input id="billProductCategory" placeholder="Category (optional)"></label>
+            <label>Selling Price (₹)<input id="billProductPrice" type="number" min="0" step="0.01" placeholder="Price (optional)"></label>
+            <div style="display:flex;align-items:end"><button id="addByDetailsBtn" class="btn primary" type="button">Add Product</button></div>
+          </div>
+          <p class="small muted">Naam ke saath Category aur Selling Price bharne se sahi variant select hoga. Barcode scan ka option bhi waise hi rahega.</p>
+        </div>
+        <div class="manual-add panel" style="margin-top:14px;background:#fffdf6">
+          <h3>Bill Type</h3>
+          <label style="max-width:300px">Invoice format<select id="billType"><option value="retail">Retail Bill</option><option value="wholesale">Wholesale / Tax Invoice (A4)</option></select></label>
+          <div id="wholesaleFields" class="form-grid hidden" style="margin-top:14px">
+            <label>Buyer / Billed To<input id="buyerName" placeholder="Customer / Firm name"></label>
+            <label>Buyer GSTIN / UIN<input id="buyerGstin" placeholder="GSTIN (optional)"></label>
+            <label>Billing Address<textarea id="buyerAddress" rows="2" placeholder="Full billing address"></textarea></label>
+            <label>Shipped To<input id="shipName" placeholder="Ship-to name (optional)"></label>
+            <label>Shipping Address<textarea id="shipAddress" rows="2" placeholder="Shipping address"></textarea></label>
+            <label>HSN / SAC Code<input id="invoiceHsn" placeholder="HSN/SAC"></label>
+            <label>Unit<input id="invoiceUnit" value="Pcs."></label>
+            <label>Discount %<input id="invoiceDiscount" type="number" min="0" max="100" step="0.01" value="0"></label>
+          </div>
+        </div>
         <p id="billingMessage" class="small muted"></p>
         <div class="table-wrap"><table><thead><tr><th>Product</th><th>Price</th><th>Qty</th><th>Line total</th><th></th></tr></thead><tbody id="cartBody"></tbody></table></div>
         <div class="bill-bottom"><label>Customer name (optional)<input id="customerName" placeholder="Customer"></label><div class="bill-total"><span>Total</span><strong id="cartTotal">₹0.00</strong></div></div>

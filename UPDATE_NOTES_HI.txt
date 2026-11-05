@@ -1,0 +1,39 @@
+JTC WEBSITE UPDATE: NAME + EXACT PRICE SEARCH
+
+Products & Stock:
+- Minimum price aur Maximum price fields hata diye gaye hain.
+- Product Name aur Exact Selling Price ke do search fields hain.
+- Sirf naam: us naam se match hone wale products.
+- Sirf price: us exact selling price wale products.
+- Dono: naam aur exact price dono match karne wale products.
+
+Price Tags:
+- Wahi Name + Exact Price filter yahan bhi hai.
+- Select all shown bhi current dono filters ke hisaab se products select karta hai.
+
+Price comparison rupees ke 2 decimal places tak hota hai. Search blank chhodne par us filter ko ignore kiya jata hai.
+
+
+NAYA UPDATE:
+- Price Tags quantity box mein type karte hi checkbox automatic tick hota hai.
+- Checkbox ko baad mein tick karne par quantity box ka pehle se likha number preserve hota hai.
+- Add Product form mein Product Name type karne par us naam ke sabhi existing variants (category, size, colour, selling price) suggestion list mein dikhte hain.
+- Product Name suggestion chunne par us product ke category, size aur colour fields fill hote hain.
+- Category, Size aur Colour fields mein bhi pehle se maujood values ki suggestions aur matching product count dikhte hain.
+
+
+LATEST UPDATE:
+- Add Product form ke Product Name, Category, Size aur Colour fields me likhte hi neeche inline matching products ki list aayegi.
+- Match sabhi bhare hue fields ke basis par hota hai. Jaise Name + Category + Size + Colour sab bhare hain to chaaron match honge.
+- Floating/dark autocomplete popup hata diya gaya hai.
+- Matching product row par click karne se wahi product edit form me khulta hai.
+- '+ Add another product with these details' se wahi naam/category/size/colour rakhkar naya product add kar sakte hain. Naye product ko alag unique barcode milega.
+- JavaScript syntax check pass hua. Live Supabase account par end-to-end test abhi nahi hua.
+
+
+SCROLL + INDIVIDUAL TAG UPDATE:
+- Products & Stock mein har product row ke Actions mein Tag button add kiya gaya.
+- Tag button dabane par wahi product Price Tags mein selected rahega.
+- Price Tags khulte hi selected product card screen ke beech mein scroll/focus hoga.
+- Bulk checkbox selection aur Go to Price Tags button bhi rakhe gaye hain; bulk selection mein pehla selected product visible hoga.
+- Wholesale invoice, manual product details billing, Documents tab aur existing price tag list ko is update mein remove nahi kiya gaya.
